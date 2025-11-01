@@ -1,0 +1,50 @@
+import os
+import sys
+from fastapi import FastAPI
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
+# figure out paths
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))        # .../bank_agent_app/web
+ROOT_DIR = os.path.dirname(THIS_DIR)                         # .../bank_agent_app
+
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+# import the async agent turn function
+from agent_core.agent import run_agent_turn_async  # noqa: E402
+
+app = FastAPI()
+
+STATIC_DIR = os.path.join(THIS_DIR, "static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+class AskBody(BaseModel):
+    message: str
+
+
+@app.post("/ask")
+async def ask_llm(body: AskBody):
+    """
+    Browser sends { "message": "..." } here.
+    We await the agent, which maintains memory between calls.
+    """
+    user_msg = body.message.strip()
+    if not user_msg:
+        return JSONResponse({"answer": "(no input)"})
+
+    try:
+        answer = await run_agent_turn_async(user_msg)
+        return JSONResponse({"answer": answer})
+    except Exception as e:
+        return JSONResponse(
+            {"answer": f"[backend error] {type(e).__name__}: {e}"},
+            status_code=500
+        )
+
+
+@app.get("/")
+async def root():
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
