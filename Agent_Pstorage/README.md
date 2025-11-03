@@ -1,3 +1,9 @@
+| Layer          | Role                                        | Data Direction    | Example                          |
+| -------------- | ------------------------------------------- | ----------------- | -------------------------------- |
+| **LLM Agent**  | Natural language interface + decision logic | Both              | “Show me what’s in the pipeline” |
+| **MCP Server** | Bridge between agent and external systems   | Both              | Routes calls to n8n webhooks     |
+| **n8n**        | Workflow orchestrator + Postgres interface  | Both              | Executes SQL or API calls        |
+| **Postgres**   | Source of truth for tasks                   | Mostly read/write | Stores all active pipeline data  |
 
 
 
@@ -137,5 +143,6 @@ DB_CONFIG in mcp_server.py: hostaddr="127.0.0.1", port=5433.
 Verify tools quickly:
 
 python test_db_health.py
+
 
 python test_get_tasks.py / python test_record_task.py
